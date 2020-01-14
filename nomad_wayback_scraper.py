@@ -10,13 +10,28 @@ import shutil
 import time
 import datetime
 from selenium.webdriver.common.keys import Keys
+import tkinter as tk
+from tkinter import filedialog
+
+# path to config file
+config_file_path = "config.txt"
+# create if it doesn't exists, let user select it
+if not os.path.exists(config_file_path):
+    root = tk.Tk()
+    root.withdraw()
+    config_file = open(config_file_path, "w")
+    config_file.write(filedialog.askdirectory())
+    config_file.close()
+# read the config file. First line is the path to the wayback_data
+config_file = open(config_file_path, "r")
+wayback_data_dir_path = config_file.readline()
+
+print("wayback_data_dir_path is: " + wayback_data_dir_path)
 
 #os.chdir(r'C:\Users\sleep\Documents\Work\Freelancing\Investor GE\Digital Nomads\data\wayback_data\')
 # Webdriver points to the Selenium chromedriver file; driver initiates it
 
-webdriver = r"C:\Users\sleep\Documents\Projects\Data Analysis\tbilisi_air_pollution\chromedriver.exe"
-driver = Chrome(webdriver)
-browser = webdriver.Chrome()
+driver = webdriver.Chrome()
 
 '''You only need to run the year/day URL scraper code if you don't have the CSV file with the dates and URLS
 If you have the CSV, you can skip to the code that scrapes the frontpage for every day's URL'''
@@ -39,14 +54,13 @@ for url in year_url_list:
 # Put the dictionary of year URLs into a CSV file so you don't have to crawl the site again
 # You'll have to change the storage directory to your own
 day_url_df = pd.DataFrame.from_dict(day_url_dict, orient="index")
-day_url_df.to_csv(r'C:\Users\sleep\Documents\Work\Freelancing\Investor GE\Digital Nomads\data\wayback_data\wayback_nomadlist_urls.csv')
-
+day_url_df.to_csv(wayback_data_dir_path + 'wayback_nomadlist_urls.csv')
 
 
 ''' FRONTPAGE SCRAPING CODE STARTS HERE'''
 # Read the CSV back into a Pandas dataframe so you can open and download every day's data
 # Again, change the directory
-nomadlist_data = pd.read_csv(r'C:\Users\sleep\Documents\Work\Freelancing\Investor GE\Digital Nomads\data\wayback_data\wayback_nomadlist_urls.csv')
+nomadlist_data = pd.read_csv(wayback_data_dir_path + 'wayback_nomadlist_urls.csv')
 nomadlist_data.columns = ["Date", "URL"]
 
 # Download frontpages in specified index range
