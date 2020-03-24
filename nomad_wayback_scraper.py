@@ -10,43 +10,62 @@ import shutil
 import time
 import datetime
 from selenium.webdriver.common.keys import Keys
+import tkinter as tk
+from tkinter import filedialog
+
+# path to config file
+config_file_path = "config.txt"
+# create if it doesn't exists, let user select it
+if not os.path.exists(config_file_path):
+    root = tk.Tk()
+    root.withdraw()
+    config_file = open(config_file_path, "w")
+    config_file.write(filedialog.askdirectory())
+    config_file.close()
+# read the config file. First line is the path to the wayback_data
+config_file = open(config_file_path, "r")
+wayback_data_dir_path = config_file.readline()
+
+wayback_data_csv_path = wayback_data_dir_path + '\wayback_nomadlist_urls.csv'
 
 #os.chdir(r'C:\Users\sleep\Documents\Work\Freelancing\Investor GE\Digital Nomads\data\wayback_data\')
 # Webdriver points to the Selenium chromedriver file; driver initiates it
 
-webdriver = r"C:\Users\sleep\Documents\Projects\Data Analysis\tbilisi_air_pollution\chromedriver.exe"
-driver = Chrome(webdriver)
-browser = webdriver.Chrome()
+driver = webdriver.Chrome()
 
 '''You only need to run the year/day URL scraper code if you don't have the CSV file with the dates and URLS
 If you have the CSV, you can skip to the code that scrapes the frontpage for every day's URL'''
-# Assemble list of year urls from 2015 to current year
-# Each URL links to a page with links to certain months/days
-year_url_list = [str("https://web.archive.org/web/" + str(year) + "0701000000*/nomadlist.com")
-                 for year in range(2015, int(datetime.datetime.now().year) + 1)]
+if not os.path.exists(wayback_data_csv_path):
+    # Assemble list of year urls from 2015 to current year
+    # Each URL links to a page with links to certain months/days
+    year_url_list = [str("https://web.archive.org/web/" + str(year) + "0701000000*/nomadlist.com")
+                     for year in range(2015, int(datetime.datetime.now().year) + 1)]
 
-# Open every year URL and put every link from every day on that year page into a dictionary
+    # Open every year URL and put every link from every day on that year page into a dictionary
 
-day_url_dict = {}
+    day_url_dict = {}
 
-for url in year_url_list:
-    driver.get(url)
-    web_elements = driver.find_elements_by_css_selector(".calendar-day a")
-    for element in web_elements:
-        day_url_dict[element.get_attribute('href')[28:36]] = element.get_attribute('href')
-    time.sleep(1)
+    # It's only working for me if I have the Chrome browser open on the page while it crawls
+    # something's up with the elements loading
 
-# Put the dictionary of year URLs into a CSV file so you don't have to crawl the site again
-# You'll have to change the storage directory to your own
-day_url_df = pd.DataFrame.from_dict(day_url_dict, orient="index")
-day_url_df.to_csv(r'C:\Users\sleep\Documents\Work\Freelancing\Investor GE\Digital Nomads\data\wayback_data\wayback_nomadlist_urls.csv')
+    for url in year_url_list:
+        driver.get(url)
+        time.sleep(2)
+        web_elements = driver.find_elements_by_css_selector(".calendar-day a")
+        for element in web_elements:
+            day_url_dict[element.get_attribute('href')[28:36]] = element.get_attribute('href')
 
+
+    # Put the dictionary of year URLs into a CSV file so you don't have to crawl the site again
+    # You'll have to change the storage directory to your own
+    day_url_df = pd.DataFrame.from_dict(day_url_dict, orient="index")
+    day_url_df.to_csv(wayback_data_csv_path)
 
 
 ''' FRONTPAGE SCRAPING CODE STARTS HERE'''
 # Read the CSV back into a Pandas dataframe so you can open and download every day's data
 # Again, change the directory
-nomadlist_data = pd.read_csv(r'C:\Users\sleep\Documents\Work\Freelancing\Investor GE\Digital Nomads\data\wayback_data\wayback_nomadlist_urls.csv')
+nomadlist_data = pd.read_csv(wayback_data_csv_path)
 nomadlist_data.columns = ["Date", "URL"]
 
 # Download frontpages in specified index range
