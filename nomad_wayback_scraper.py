@@ -26,7 +26,7 @@ if not os.path.exists(config_file_path):
 config_file = open(config_file_path, "r")
 wayback_data_dir_path = config_file.readline()
 
-wayback_data_csv_path = wayback_data_dir_path + '/wayback_nomadlist_urls.csv'
+wayback_data_csv_path = wayback_data_dir_path + '\wayback_nomadlist_urls.csv'
 
 #os.chdir(r'C:\Users\sleep\Documents\Work\Freelancing\Investor GE\Digital Nomads\data\wayback_data\')
 # Webdriver points to the Selenium chromedriver file; driver initiates it
@@ -45,12 +45,16 @@ if not os.path.exists(wayback_data_csv_path):
 
     day_url_dict = {}
 
+    # It's only working for me if I have the Chrome browser open on the page while it crawls
+    # something's up with the elements loading
+
     for url in year_url_list:
         driver.get(url)
+        time.sleep(2)
         web_elements = driver.find_elements_by_css_selector(".calendar-day a")
         for element in web_elements:
             day_url_dict[element.get_attribute('href')[28:36]] = element.get_attribute('href')
-        time.sleep(1)
+
 
     # Put the dictionary of year URLs into a CSV file so you don't have to crawl the site again
     # You'll have to change the storage directory to your own
